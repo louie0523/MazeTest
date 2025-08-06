@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEngine;
 using System.Linq;
+using UnityEngine;
+using static UnityEditor.PlayerSettings;
 
 
 [System.Serializable]
@@ -14,48 +15,6 @@ public class PathMarker
     public GameObject marker;
     public PathMarker parent;
 
-    public PathMarker(MapLocation I, float g, float h, float f, GameObject marker, PathMarker p)
-    {
-        location = I;
-        G = g;
-        H = h;
-        F = f;
-        this.marker = marker;
-        parent = p;
-    }
-
-
-
-    public bool returnreturnEquals(PathMarker obj)
-    {
-        Debug.Log(((PathMarker)obj).location.x + " : " + ((PathMarker)obj).location.z);
-        if ((obj == null) || !this.GetType().Equals(obj.GetType()))
-        {
-            return false;
-        }
-        else
-        {
-            return location.x == ((PathMarker)obj).location.x && location.z == ((PathMarker)obj).location.z;
-        }
-    }
-
-    public bool returnreturnEquals(MapLocation obj)
-    {
-        Debug.Log(obj.x + " : " + obj.z);
-        if ((obj == null) || !this.GetType().Equals(obj.GetType()))
-        {
-            return false;
-        }
-        else
-        {
-            return location.x == obj.x && location.z == obj.z;
-        }
-    }
-
-    public override int GetHashCode()
-    {
-        return 0;
-    }
 }
 public class FindPathAStar : MonoBehaviour
 {
@@ -118,7 +77,9 @@ public class FindPathAStar : MonoBehaviour
         Startnode.x = locations[0].x;
         Startnode.z = locations[0].z;
 
-        startNode = new PathMarker(Startnode, 0, 0, 0, Instantiate(start, startLocation, Quaternion.identity), null);
+
+
+        startNode = NewPathMarker(Startnode, 0, 0, 0, Instantiate(start, startLocation, Quaternion.identity), null);
 
 
         MapLocation Goalnode = new MapLocation();
@@ -126,7 +87,7 @@ public class FindPathAStar : MonoBehaviour
         Goalnode.z = locations[1].z;
 
         Vector3 goalLocation = new Vector3(locations[1].x * maze.scale, 0, locations[1].z * maze.scale);
-        goalNode = new PathMarker(Goalnode, 0, 0, 0, Instantiate(end, goalLocation, Quaternion.identity), null);
+        goalNode = NewPathMarker(Goalnode, 0, 0, 0, Instantiate(end, goalLocation, Quaternion.identity), null);
 
         open.Clear();
         closed.Clear();
@@ -136,9 +97,24 @@ public class FindPathAStar : MonoBehaviour
 
     }
 
+    public PathMarker NewPathMarker(MapLocation location, float G, float H, float F, GameObject marker, PathMarker parent)
+    {
+        PathMarker pathMarker = new PathMarker();
+        pathMarker.location = location;
+        pathMarker.G = G;
+        pathMarker.H = H;
+        pathMarker.F = F;
+        pathMarker.marker = marker;
+        pathMarker.parent = parent;
+
+        return pathMarker;
+    }
+
+
+
     void Search(PathMarker thisNode)
     {
-        if (thisNode.returnreturnEquals(goalNode))
+        if (thisNode.location.x == goalNode.location.x && thisNode.location.z == goalNode.location.z)
         {
             done = true;
             return;
@@ -146,6 +122,7 @@ public class FindPathAStar : MonoBehaviour
 
         foreach (MapLocation dir in maze.directions)
         {
+            Debug.Log(dir.x + " : " + dir.z);
             MapLocation neighbor = new MapLocation();
 
             neighbor.x = dir.x + thisNode.location.x;
@@ -184,7 +161,7 @@ public class FindPathAStar : MonoBehaviour
 
             if (!UpdateMarker(neighbor, G, H, F, thisNode))
             {
-                open.Add(new PathMarker(neighbor, G, H, F, pathBlock, thisNode));
+                open.Add(NewPathMarker(neighbor, G, H, F, pathBlock, thisNode));
             }
 
         }
@@ -206,7 +183,7 @@ public class FindPathAStar : MonoBehaviour
     {
         foreach (PathMarker p in open)
         {
-            if (p.returnreturnEquals(pos))
+            if (p.location.x == pos.x && p.location.z == pos.z)
             {
                 p.G = g;
                 p.H = h;
@@ -223,7 +200,7 @@ public class FindPathAStar : MonoBehaviour
     {
         foreach (PathMarker p in closed)
         {
-            if (p.returnreturnEquals(marker))
+            if (p.location.x == marker.x && p.location.z == marker.z)
             {
                 return true;
             }
@@ -236,7 +213,7 @@ public class FindPathAStar : MonoBehaviour
         RemoveAllMarkers();
         PathMarker begin = lastPos;
 
-        while (!startNode.returnreturnEquals(begin) && begin != null)
+        while (!(startNode.location.x == begin.location.x && startNode.location.z == begin.location.z) && begin != null)
         {
             Instantiate(pathP, new Vector3(begin.location.x * maze.scale, 0, begin.location.z * maze.scale), Quaternion.identity);
             begin = begin.parent;
@@ -250,7 +227,7 @@ public class FindPathAStar : MonoBehaviour
     void SetMvoePath()
     {
         PathMarker begin = lastPos;
-        while (!startNode.returnreturnEquals(begin) && begin != null)
+        while (!(startNode.location.x == begin.location.x && startNode.location.z == begin.location.z) && begin != null)
         {
             movePath.Add(new Vector3(begin.location.x * maze.scale, 0, begin.location.z * maze.scale));
             begin = begin.parent;

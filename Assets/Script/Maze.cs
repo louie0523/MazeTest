@@ -5,7 +5,7 @@ using System.Security.Cryptography;
 using System.Xml.Linq;
 using UnityEngine;
 
-[SerializeField]
+[System.Serializable]
 public class MapLocation
 {
     public int x;
@@ -21,6 +21,7 @@ public class Maze : MonoBehaviour
     public static Maze instance;
 
     System.Random rng = new System.Random();
+    [SerializeField]
     public List<MapLocation> directions = new List<MapLocation>();
     public int width = 30;
     public int depth = 30;
@@ -92,9 +93,30 @@ public class Maze : MonoBehaviour
         MapLocation location3 = new MapLocation();
         location3.x = 0;
         location3.z = -1;
-        //클래스 내 함수로 값 등록
-        //location0.SetMapLocation(0,-1);
         directions.Add(location3);
+        //클래스 내 함수로 값 등록
+        //↗
+        MapLocation location4 = new MapLocation();
+        location4.x = 1;
+        location4.z = 1;
+        directions.Add(location4);
+        //↖
+        MapLocation location5 = new MapLocation();
+        location5.x = -1;
+        location5.z = 1;
+        directions.Add(location5);
+        //↘
+        MapLocation location6 = new MapLocation();
+        location6.x = 1;
+        location6.z = -1;
+        directions.Add(location6);
+        //↙
+        MapLocation location7 = new MapLocation();
+        location6.x = -1;
+        location6.z = -1;
+        directions.Add(location7);
+
+
     }
 
 
@@ -119,7 +141,7 @@ public class Maze : MonoBehaviour
                 int changeX = current.x + dir.x;
                 int changeZ = current.z + dir.z;
 
-                if (!(CountSquareNeighbours(changeX, changeZ) >= 2 || map[changeX, changeZ] == 0))
+                if (!(CountSquareNeighbours(changeX, changeZ) >= 2|| map[changeX, changeZ] == 0))
                 {
                     map[changeX, changeZ] = 0;
                     MapLocation tempData = new MapLocation();
@@ -158,7 +180,43 @@ public class Maze : MonoBehaviour
                 int changeX = current.x + dir.x;
                 int changeZ = current.y + dir.z;
 
-                if (!(CountSquareNeighbours(changeX, changeZ) >= 2 || map[changeX, changeZ] == 0))
+                if (!(CountSquareNeighbours(changeX, changeZ) >= 2 || map[changeX, changeZ] == 0 ))
+                {
+                    map[changeX, changeZ] = 0;
+                    mapDatas.Push(new Vector2Int(changeX, changeZ));
+                    moved = true;
+                    break;
+                }
+            }
+            if (!moved)
+            {
+                mapDatas.Pop();
+            }
+        }
+
+    }
+
+    void Generate8(int x, int z)
+    {
+        Stack<Vector2Int> mapDatas = new Stack<Vector2Int>();
+        int startX = x;
+        int StartZ = z;
+        map[startX, StartZ] = 0;
+        mapDatas.Push(new Vector2Int(startX, StartZ));
+
+        while (mapDatas.Count > 0)
+        {
+            Vector2Int current = mapDatas.Peek();
+            Shuffle(directions);
+            //이동이 가능한 곳인지 확인
+            bool moved = false;
+
+            foreach (MapLocation dir in directions)
+            {
+                int changeX = current.x + dir.x;
+                int changeZ = current.y + dir.z;
+
+                if (!((CountSquareNeighbours(changeX, changeZ) + CountSleepSqaureNeighbours(changeX, changeZ)) >= 4 || map[changeX, changeZ] == 0))
                 {
                     map[changeX, changeZ] = 0;
                     mapDatas.Push(new Vector2Int(changeX, changeZ));
@@ -220,6 +278,23 @@ public class Maze : MonoBehaviour
         if (map[x + 1, z] == 0) count++;
         if (map[x, z + 1] == 0) count++;
         if (map[x, z - 1] == 0) count++;
+        return count;
+    }
+
+    /// <summary>
+    /// 대각선 4방위 복도를 검색한다. 
+    /// </summary>
+    /// <param name="x"></param>
+    /// <param name="z"></param>
+    /// <returns></returns>
+    public int CountSleepSqaureNeighbours(int x, int z)
+    {
+        int count = 0;
+        if (x <= 0 || x >= width - 1 || z <= 0 || z >= depth - 1) return 5;
+        if (map[x - 1, z + 1] == 0) count++;
+        if (map[x + 1, z + 1] == 0) count++;
+        if (map[x - 1, z - 1] == 0) count++;
+        if (map[x + 1, z - 1] == 0) count++;
         return count;
     }
 
